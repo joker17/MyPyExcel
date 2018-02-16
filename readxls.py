@@ -1,19 +1,45 @@
 #!/usr/local/bin/python3
-#import pyexcel_io
-import sys
-import json
-import collections
-#sys.path.append("/usr/local/lib/python3.6/site-packages")
-print("test[%s]" % sys.path)
-print("test[%s]" % sys.version)
-import pyexcel as pe
+#-*-coding: utf-8-*-
+import os
+import pyexcel
 
-records = pe.iget_records(file_name="./data1.xls")
-t1 = collections.OrderedDict(records)
-#records = pe.iget_records(file_name="./test_xlsx.xlsx")
-#print("[%s]", records[0][1])
-for record in records:
-    print("%s is aged at %d" % (record['NAME'], record['AGE']))
 
-for key, item in t1.items():
-    print(json.dumps({key: item}))
+def main(base_dir):
+    spreadsheet = pyexcel.get_sheet(file_name=os.path.join(base_dir,"hisqs_ti_tbranchdeliver.csv"))
+    sqls = rows2sqls(list(spreadsheet.rows() ))
+    print("=========\n%s" % sqls)
+
+    
+#生成sql插入所有
+def rows2sqls(rows):
+    index = 0
+    names = ""
+    values = ""
+    sql = ""
+    sqls = ""
+    cols = ""
+    for row in rows:
+        print(row)
+        if (index == 0):
+            head = "insert into hisqs_ti_tbranchdeliver ("
+            for value in row:
+                names += str(value) + ","
+            names = names[:-1]
+            names += ")\n"
+            head += names
+        else:
+            col = " select "
+            for value in row:
+                col += "'" + str(value) + "'" + ","
+            col = col[:-1]
+            col += " from dual union"
+            cols += col
+        index += 1
+    cols = cols[:cols.rfind("union")]
+    sqls = head + cols
+    print("-----------%s" % sqls)
+    return sqls
+
+
+if __name__ == '__main__':
+    main(os.getcwd())
